@@ -10,30 +10,30 @@ Update the configuration as for each container for your specific needs or use ca
 ###########################################################
 ```
 
-### Containers should be configured with the both labels. <br> Watchtower will not need the watchtower.enable=true
+### Containers should be configured with the label below
 
 ```
 labels:
   - autoheal=true
-  - "com.centurylinklabs.watchtower.enable=true"
 ```
 
 Static IPs for each service listed here:
 ```
-Docker GW     172.50.0.1
-VPN           172.50.0.2
-Embyserver    172.50.0.3
-Jellyseerr    172.50.0.4
-Sonarr        172.50.0.5
-Radarr        172.50.0.6
-Prowlarr      172.50.0.7
-Unpackerr     172.50.0.8
-Flaresolverr  172.50.0.10
-Portainer     172.50.0.30
-Syncthing     172.50.0.40
-Openspeedtest 172.50.0.50
-Unifi         172.50.0.60
-Watchtower    172.50.0.110
+Docker GW         172.50.0.1
+VPN               172.50.0.2
+Embyserver        172.50.0.3
+Jellyseerr        172.50.0.4
+Sonarr            172.50.0.5
+Radarr            172.50.0.6
+Prowlarr          172.50.0.7
+Unpackerr         172.50.0.8
+Flaresolverr      172.50.0.10
+Portainer         172.50.0.30
+Syncthing         172.50.0.40
+Openspeedtest     172.50.0.50
+Speedtest-tracker 172.50.0.60
+Unifi             172.50.0.70
+Watchtower        172.50.0.110
 ```
 
 ```
@@ -265,6 +265,18 @@ Watchtower    172.50.0.110
       retries: 3
       start_period: 2m
 ```
+
+```
+  ###################################
+  ####### Speedtest Tracker #########
+  ###################################
+
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://127.0.0.1:80 || exit 1"]
+      interval: 5m
+      timeout: 10s
+      retries: 3
+      start_period: 2m
 
 ```
   #######################
