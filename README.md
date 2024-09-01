@@ -1,6 +1,6 @@
 # healthchecks
-Docker healthchecks that work for specific containers inside docker compose file.
-Confirmed these healthchecks work. Tried to use 127.0.0.1 if possible, otherwise selected docker IP for the container.
+Docker healthchecks that work for specific containers inside docker compose file. These were all configured on a Synology NAS.
+Have confirmed thes below healthchecks work at the time of this document. Use 127.0.0.1 if possible, otherwise selected docker IP for the container.
 Some containers were missing curl, such as Jellyseerr, Unpackerr and Watchtower so had to resort to using other methods for a healthcheck to work successfully.
 Update the configuration as for each container for your specific needs or use cases.
 
