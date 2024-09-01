@@ -276,6 +276,7 @@ Watchtower        172.50.0.110
       timeout: 10s
       retries: 3
       start_period: 2m
+```
 
 ```
   #######################
