@@ -48,14 +48,13 @@ Watchtower        172.50.0.110
       test: |
         /bin/sh -c '
         check_ip() {
-          curl -s -f -m 15 https://www.google.com -o /dev/null -w "%{remote_ip}" | grep -vE "^(10\.|172\.(1[6-9]|2[0-9]|3[01])\.|192\.168\.)"
-        }
+          curl -s -f https://www.google.com -o /dev/null -w "%{remote_ip}" | grep -vE "^(10\.|172\.(1[6-9]|2[0-9]|3[01])\.|192\.168\.)"            }
         check_ip
         '
-      interval: 60s
+      interval: 2m
       timeout: 15s
       retries: 3
-      start_period: 60s
+      start_period: 1m
 ```   
 
 ```
