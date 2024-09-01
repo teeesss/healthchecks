@@ -46,16 +46,11 @@ Watchtower        172.50.0.110
     image: thrnz/docker-wireguard-pia:latest
     container_name: vpn
     healthcheck:
-      test: |
-        /bin/sh -c '
-        check_ip() {
-          curl -s -f https://www.google.com -o /dev/null -w "%{remote_ip}" | grep -vE "^(10\.|172\.(1[6-9]|2[0-9]|3[01])\.|192\.168\.)"            }
-        check_ip
-        '
-      interval: 2m
-      timeout: 15s
+      test: ["CMD", "ping", "-c", "1", "8.8.8.8"]
+      interval: 30s
+      timeout: 10s
       retries: 3
-      start_period: 1m
+      start_period: 30s
 ```   
 
 ```
