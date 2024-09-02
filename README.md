@@ -47,7 +47,7 @@ Watchtower        172.50.0.110
     container_name: vpn
     healthcheck:
       test: ["CMD", "ping", "-c", "1", "8.8.8.8"]
-      interval: 30s
+      interval: 1m
       timeout: 10s
       retries: 3
       start_period: 30s
@@ -55,15 +55,17 @@ Watchtower        172.50.0.110
 
 ```
   ###########################
-  ####### Jellyseerr ########
+  ####### Embyserver ########
   ###########################
 
+  embyserver:
+    image: emby/embyserver:latest
     healthcheck:
       test: ["CMD-SHELL", "wget -q -O - http://localhost:8096/System/Ping | grep -q 'Emby Server' || exit 1"]
       interval: 5m
       timeout: 20s
       retries: 3
-      start_period: 2m
+      start_period: 45s
 ``` 
 
 ```
@@ -76,10 +78,10 @@ Watchtower        172.50.0.110
     container_name: jellyseerr
     healthcheck:
       test: ["CMD", "node", "-e", "const http = require('http'); const options = { hostname: '127.0.0.1', port: 5055, path: '/api/v1/status', method: 'GET' }; const req = http.request(options, (res) => { if (res.statusCode == 200) { process.exit(0); } else { process.exit(1); }}); req.on('error', (e) => { process.exit(1); }); req.end();"]
-      interval: 1m
+      interval: 5m
       timeout: 30s
       retries: 3
-      start_period: 3m
+      start_period: 45s
     depends_on:
       vpn:
         condition: service_healthy
@@ -121,7 +123,7 @@ Watchtower        172.50.0.110
       interval: 5m
       timeout: 20s
       retries: 3
-      start_period: 2m
+      start_period: 30s
 ```
 
 ```
@@ -137,7 +139,7 @@ Watchtower        172.50.0.110
       interval: 5m
       timeout: 20s
       retries: 3
-      start_period: 2m
+      start_period: 45s
 ```
 
 ```
@@ -153,7 +155,7 @@ Watchtower        172.50.0.110
       interval: 5m
       timeout: 20s
       retries: 3
-      start_period: 2m
+      start_period: 35s
     depends_on:
       vpn:
         condition: service_healthy
@@ -172,7 +174,7 @@ Watchtower        172.50.0.110
       interval: 5m
       timeout: 20s
       retries: 3
-      start_period: 2m
+      start_period: 45s
     depends_on:
       vpn:
         condition: service_healthy
@@ -191,7 +193,7 @@ Watchtower        172.50.0.110
       interval: 5m
       timeout: 20s
       retries: 3
-      start_period: 2m
+      start_period: 50s
 ```
 
 ```
@@ -201,9 +203,10 @@ Watchtower        172.50.0.110
 
     healthcheck:
       test: wget --no-verbose --tries=3 --spider http://127.0.0.1:9000 || exit 1
-      interval: 1m
-      retries: 5
-      start_period: 3m
+      interval: 5m
+      timeout: 20s
+      retries: 3
+      start_period: 50s
 ```
 
 ```
@@ -217,9 +220,9 @@ Watchtower        172.50.0.110
     healthcheck:
       test: [ "CMD", "/unpackerr", "--version" ]
       interval: 10m
-      timeout: 30s
+      timeout: 20s
       retries: 3
-      start_period: 2m
+      start_period: 35s
 ```
 
 ```
@@ -232,7 +235,7 @@ Watchtower        172.50.0.110
       interval: 5m
       timeout: 20s
       retries: 3
-      start_period: 2m
+      start_period: 30s
 ```
 
 ```
@@ -245,7 +248,7 @@ Watchtower        172.50.0.110
       interval: 5m
       timeout: 20s
       retries: 3
-      start_period: 2m
+      start_period: 50s
 ```
 
 ```
@@ -258,7 +261,7 @@ Watchtower        172.50.0.110
       interval: 5m
       timeout: 20s
       retries: 3
-      start_period: 2m
+      start_period: 40s
 ```
 
 ```
@@ -269,9 +272,9 @@ Watchtower        172.50.0.110
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://127.0.0.1:80 || exit 1"]
       interval: 5m
-      timeout: 10s
+      timeout: 20s
       retries: 3
-      start_period: 2m
+      start_period: 50s
 ```
 
 ```
@@ -281,10 +284,10 @@ Watchtower        172.50.0.110
 
     healthcheck:
       test: ["CMD", "curl", "-fk", "https://127.0.0.1:8443/manage/account/login" ]
-      interval: 60s
-      timeout: 10s
-      retries: 5
-      start_period: 3m
+      interval: 5m
+      timeout: 20s
+      retries: 3
+      start_period: 50s
 ```
 
 ```
