@@ -44,7 +44,6 @@ Watchtower        172.50.0.110
 
   vpn:
     image: thrnz/docker-wireguard-pia:latest
-    container_name: vpn
     healthcheck:
       test: ["CMD", "ping", "-c", "1", "8.8.8.8"]
       interval: 1m
@@ -75,7 +74,6 @@ Watchtower        172.50.0.110
 
   jellyseerr:
     image: fallenbagel/jellyseerr:latest
-    container_name: jellyseerr
     healthcheck:
       test: ["CMD", "node", "-e", "const http = require('http'); const options = { hostname: '127.0.0.1', port: 5055, path: '/api/v1/status', method: 'GET' }; const req = http.request(options, (res) => { if (res.statusCode == 200) { process.exit(0); } else { process.exit(1); }}); req.on('error', (e) => { process.exit(1); }); req.end();"]
       interval: 5m
@@ -110,14 +108,6 @@ Watchtower        172.50.0.110
 
   radarr:
     image: lscr.io/linuxserver/radarr:latest
-    container_name: radarr
-    environment:
-      - PUID=${USER_ID}
-      - PGID=${GROUP_ID}
-      - TZ=${TIMEZONE}
-    volumes:
-      - ./radarr:/config
-      - /${DOWNLOAD_ARR}:/data
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://127.0.0.1:7878/ping" ]
       interval: 5m
@@ -133,7 +123,6 @@ Watchtower        172.50.0.110
 
   prowlarr:
     image: lscr.io/linuxserver/prowlarr:latest
-    container_name: prowlarr
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://127.0.0.1:9696/ping" ]
       interval: 5m
@@ -168,7 +157,6 @@ Watchtower        172.50.0.110
 
   sabnzbd:
     image: lscr.io/linuxserver/sabnzbd:latest
-    container_name: sabnzb
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://127.0.0.1:6790/sabnzbd/api?mode=version&output=json" ]
       interval: 5m
@@ -187,7 +175,6 @@ Watchtower        172.50.0.110
 
   flaresolverr:
     image: ghcr.io/flaresolverr/flaresolverr:latest
-    container_name: flaresolverr
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://172.50.0.10:8191" ]
       interval: 5m
@@ -201,6 +188,8 @@ Watchtower        172.50.0.110
   ####### Portainer #######
   #########################
 
+  portainer:
+    image: portainer/portainer-ce:alpine-sts    
     healthcheck:
       test: wget --no-verbose --tries=3 --spider http://127.0.0.1:9000 || exit 1
       interval: 5m
@@ -230,6 +219,8 @@ Watchtower        172.50.0.110
   ####### Watchtower ########
   ###########################
 
+  watchtower:
+    image: containrrr/watchtower:latest
     healthcheck:
       test: ["CMD", "/watchtower", "--health-check"]
       interval: 5m
@@ -243,6 +234,8 @@ Watchtower        172.50.0.110
   ####### Syncthing #########
   ###########################
 
+  syncthing:
+    image: lscr.io/linuxserver/syncthing:latest
     healthcheck:
       test: ["CMD", "curl", "-f", "http://127.0.0.1:8384/rest/noauth/health"]
       interval: 5m
@@ -256,6 +249,8 @@ Watchtower        172.50.0.110
   ####### OpenSpeedTest #########
   ###############################
 
+  speedtest:
+    image: openspeedtest/latest
     healthcheck:
       test: ["CMD-SHELL", "curl -If http://127.0.0.1:3000 | grep 'HTTP/1.1 200 OK'"]
       interval: 5m
@@ -269,6 +264,8 @@ Watchtower        172.50.0.110
   ####### Speedtest Tracker #########
   ###################################
 
+  speedtest:
+    image: lscr.io/linuxserver/speedtest-tracker
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://127.0.0.1:80 || exit 1"]
       interval: 5m
@@ -282,6 +279,8 @@ Watchtower        172.50.0.110
   ####### Unifi #########
   #######################
 
+  unifi:
+    image: jacobalberty/unifi:latest
     healthcheck:
       test: ["CMD", "curl", "-fk", "https://127.0.0.1:8443/manage/account/login" ]
       interval: 5m
