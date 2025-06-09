@@ -1,309 +1,204 @@
-# healthchecks
-Docker healthchecks that work for specific containers inside a docker compose file. These were all configured on a Synology NAS, but should work on any Linux system. Have confirmed thes below healthchecks work at the time of this document. Use 127.0.0.1 if possible, otherwise selected docker IP for the container if needed. Some containers were missing curl, such as Jellyseerr, Unpackerr and Watchtower so had to resort to using other methods for a healthcheck to work successfully. Update the configuration for your specific needs or use cases. Full AutoHeal configuration is at the bottom for reference.
-Some of my ports might be different than the defaults. Ensure yours match your configuration. The purpose of this configuration is so your AutoHeal container can monitor your containers for failures and restart as needed. If you don't have a proper healthcheck setup, you can't run AutoHeal and have it function to properly monitor and restart your containers as needed. I also use Watchtower, but it's outside the scope of this document.
+# Healthchecks for Docker Compose
+
+Docker healthchecks configured for specific containers in a Docker Compose setup. These were tested on a Linux system and should work across most Linux environments, including Synology NAS. Use `127.0.0.1` for healthchecks where possible, or the container's assigned Docker IP if needed. Some containers, like Jellyseerr, Unpackerr, and Watchtower, lack `curl`, requiring alternative healthcheck methods. Adjust configurations to match your specific ports and use case. These healthchecks enable the AutoHeal container to monitor and restart containers as needed. Watchtower is used for container updates but is outside this document's scope.
+
+## Prerequisites
+
+- Ensure all containers have the following label for AutoHeal compatibility:
+```
+  labels:
+    - autoheal=true
+```
+#### Verify port mappings and static IPs match your setup.
+
+#### Set necessary environment variables in a .env file.
 
 ```
-###########################################################
-####### Check and set any needed variables in .env  #######
-###########################################################
+Static IPs for Services
+
+Docker GW:         172.50.0.1
+VPN:               172.50.0.2
+Emby:              172.50.0.3
+Jellyseerr:        172.50.0.4
+Sonarr:            172.50.0.5
+Radarr:            172.50.0.6
+Prowlarr:          172.50.0.7
+Unpackerr:         172.50.0.8
+Flaresolverr:      172.50.0.10
+Choco:             172.50.0.50
+Watchtower:        172.50.0.110
+Nebula-sync:       172.50.0.125
+PiHole:            (Not assigned in network)
+```
+## Container Healthchecks
+```
+vpn:
+  image: thrnz/docker-wireguard-pia:latest
+  healthcheck:
+    test: ["CMD-SHELL", "/etc/healthcheck/vpn_healthcheck.sh"]
+    interval: 60s
+    timeout: 90s
+    retries: 2
+    start_period: 40s
 ```
 
-### Containers should be configured with the label below
-
+### Emby
 ```
-labels:
-  - autoheal=true
+emby:
+  image: emby/embyserver:latest
+  healthcheck:
+    test: ["CMD-SHELL", "netstat -lnt | grep -q ':8096'"]
+    interval: 2m
+    timeout: 10s
+    retries: 5
+    start_period: 90s
 ```
-
-Static IPs for each service listed here:
+### Jellyseerr
 ```
-Docker GW         172.50.0.1
-VPN               172.50.0.2
-Embyserver        172.50.0.3
-Jellyseerr        172.50.0.4
-Sonarr            172.50.0.5
-Radarr            172.50.0.6
-Prowlarr          172.50.0.7
-Unpackerr         172.50.0.8
-Flaresolverr      172.50.0.10
-Portainer         172.50.0.30
-Syncthing         172.50.0.40
-Openspeedtest     172.50.0.50
-Speedtest-tracker 172.50.0.60
-Unifi             172.50.0.70
-Watchtower        172.50.0.110
+jellyseerr:
+  image: fallenbagel/jellyseerr:latest
+  healthcheck:
+    test: ["CMD-SHELL", "netstat -lnt | grep -q ':5055'"]
+    interval: 2m
+    timeout: 10s
+    retries: 3
+    start_period: 60s
 ```
-
+### Sonarr
 ```
-  #########################
-  ####### PIA VPN #########
-  #########################
-
-  vpn:
-    image: thrnz/docker-wireguard-pia:latest
-    healthcheck:
-      test: ["CMD", "ping", "-c", "1", "8.8.8.8"]
-      interval: 1m
-      timeout: 10s
-      retries: 3
-      start_period: 30s
-```   
-
+sonarr:
+  image: lscr.io/linuxserver/sonarr:latest
+  healthcheck:
+    test: ["CMD", "curl", "-f", "http://127.0.0.1:8999/ping"]
+    interval: 5m
+    timeout: 20s
+    retries: 3
+    start_period: 40s
 ```
-  ###########################
-  ####### Embyserver ########
-  ###########################
-
-  embyserver:
-    image: emby/embyserver:latest
-    healthcheck:
-      test: ["CMD-SHELL", "wget -q -O - http://localhost:8096/System/Ping | grep -q 'Emby Server' || exit 1"]
-      interval: 5m
-      timeout: 20s
-      retries: 3
-      start_period: 45s
-``` 
-
+### Radarr
 ```
-  ###########################
-  ####### Jellyseerr ########
-  ###########################
-
-  jellyseerr:
-    image: fallenbagel/jellyseerr:latest
-    healthcheck:
-      test: ["CMD", "node", "-e", "const http = require('http'); const options = { hostname: '127.0.0.1', port: 5055, path: '/api/v1/status', method: 'GET' }; const req = http.request(options, (res) => { if (res.statusCode == 200) { process.exit(0); } else { process.exit(1); }}); req.on('error', (e) => { process.exit(1); }); req.end();"]
-      interval: 5m
-      timeout: 30s
-      retries: 3
-      start_period: 45s
-    depends_on:
-      vpn:
-        condition: service_healthy
+radarr:
+  image: lscr.io/linuxserver/radarr:latest
+  healthcheck:
+    test: ["CMD", "curl", "-f", "http://127.0.0.1:7878/ping"]
+    interval: 5m
+    timeout: 20s
+    retries: 3
+    start_period: 42s
 ```
-
+### Prowlarr
 ```
-  #########################
-  ######## Sonarr #########
-  #########################
-
-  sonarr:
-    image: lscr.io/linuxserver/sonarr:latest
-    container_name: sonarr
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://127.0.0.1:8999/ping" ]
-      interval: 5m
-      timeout: 20s
-      retries: 3
-      start_period: 2m
+prowlarr:
+  image: lscr.io/linuxserver/prowlarr:latest
+  healthcheck:
+    test: ["CMD", "curl", "-f", "http://127.0.0.1:9696/ping"]
+    interval: 5m
+    timeout: 20s
+    retries: 3
+    start_period: 44s
 ```
-
+### qBittorrent
 ```
-  #########################
-  ######## Radarr #########
-  #########################
-
-  radarr:
-    image: lscr.io/linuxserver/radarr:latest
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://127.0.0.1:7878/ping" ]
-      interval: 5m
-      timeout: 20s
-      retries: 3
-      start_period: 30s
+qbittorrent:
+  image: lscr.io/linuxserver/qbittorrent:latest
+  healthcheck:
+    test: ["CMD", "curl", "-f", "http://127.0.0.1:${QBIT_WEBUI_PORT}/api/v2/app/version"]
+    interval: 5m
+    timeout: 20s
+    retries: 3
+    start_period: 45s
 ```
-
+### SABnzbd
 ```
-  #########################
-  ####### Prowlarr ########
-  #########################
-
-  prowlarr:
-    image: lscr.io/linuxserver/prowlarr:latest
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://127.0.0.1:9696/ping" ]
-      interval: 5m
-      timeout: 20s
-      retries: 3
-      start_period: 45s
+sabnzbd:
+  image: lscr.io/linuxserver/sabnzbd:latest
+  healthcheck:
+    test: ["CMD", "curl", "-f", "http://127.0.0.1:6790/sabnzbd/api?mode=version&output=json"]
+    interval: 5m
+    timeout: 20s
+    retries: 3
+    start_period: 40s
 ```
-
+### Flaresolverr
 ```
-  ###########################
-  ####### qBittorrent #######
-  ###########################
-
-  qbittorrent:
-    image: lscr.io/linuxserver/qbittorrent:latest
-    container_name: qbittorrent
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://127.0.0.1:${QBIT_WEBUI_PORT}/api/v2/app/version" ]
-      interval: 5m
-      timeout: 20s
-      retries: 3
-      start_period: 35s
-    depends_on:
-      vpn:
-        condition: service_healthy
+flaresolverr:
+  image: ghcr.io/flaresolverr/flaresolverr:latest
+  healthcheck:
+    test: ["CMD-SHELL", "curl -s --fail http://localhost:8191 -o /dev/null"]
+    interval: 2m
+    timeout: 10s
+    retries: 3
+    start_period: 60s
 ```
-
+### Unpackerr
 ```
-  #########################
-  ######## SABNZB #########
-  #########################
-
-  sabnzbd:
-    image: lscr.io/linuxserver/sabnzbd:latest
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://127.0.0.1:6790/sabnzbd/api?mode=version&output=json" ]
-      interval: 5m
-      timeout: 20s
-      retries: 3
-      start_period: 45s
-    depends_on:
-      vpn:
-        condition: service_healthy
+unpackerr:
+  image: golift/unpackerr:latest
+  healthcheck:
+    test: ["CMD", "/unpackerr", "--version"]
+    interval: 10m
+    timeout: 30s
+    retries: 3
+    start_period: 44s
 ```
-
+### AutoHeal
 ```
-  ###########################
-  ####### Flaresolverr ######
-  ###########################
-
-  flaresolverr:
-    image: ghcr.io/flaresolverr/flaresolverr:latest
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://172.50.0.10:8191" ]
-      interval: 5m
-      timeout: 20s
-      retries: 3
-      start_period: 50s
+autoheal:
+  image: willfarrell/autoheal:latest
+  healthcheck:
+    test: ["CMD-SHELL", "pgrep -f autoheal || exit 1"]
+    interval: 5m
+    timeout: 10s
+    retries: 3
+    start_period: 35s
 ```
-
+### Choco
 ```
-  #########################
-  ####### Portainer #######
-  #########################
-
-  portainer:
-    image: portainer/portainer-ce:alpine-sts    
-    healthcheck:
-      test: wget --no-verbose --tries=3 --spider http://127.0.0.1:9000 || exit 1
-      interval: 5m
-      timeout: 20s
-      retries: 3
-      start_period: 50s
+choco:
+  image: chocolatey/choco:latest-linux
+  healthcheck:
+    test: ["CMD-SHELL", "grep -q 'tail' /proc/[0-9]*/cmdline"]
+    interval: 5m
+    timeout: 10s
+    retries: 3
+    start_period: 10s
 ```
-
+### Watchtower
 ```
-  #########################
-  ####### Unpackerr #######
-  #########################
-
-  unpackerr:
-    image: golift/unpackerr:latest
-    container_name: unpackerr
-    healthcheck:
-      test: [ "CMD", "/unpackerr", "--version" ]
-      interval: 10m
-      timeout: 20s
-      retries: 3
-      start_period: 35s
+watchtower:
+  image: containrrr/watchtower:latest
+  healthcheck:
+    test: ["CMD", "/watchtower", "--health-check"]
+    interval: 5m
+    timeout: 30s
+    retries: 3
+    start_period: 35s
 ```
-
+### PiHole
 ```
-  ###########################
-  ####### Watchtower ########
-  ###########################
-
-  watchtower:
-    image: containrrr/watchtower:latest
-    healthcheck:
-      test: ["CMD", "/watchtower", "--health-check"]
-      interval: 5m
-      timeout: 20s
-      retries: 3
-      start_period: 30s
+pihole:
+  image: mpgirro/pihole-unbound:latest
+  healthcheck:
+    test: ["CMD-SHELL", "dig @127.0.0.1 -p 5335 google.com || exit 1"]
+    interval: 1m
+    timeout: 10s
+    retries: 3
+    start_period: 60s
 ```
-
-```
-  ###########################
-  ####### Syncthing #########
-  ###########################
-
-  syncthing:
-    image: lscr.io/linuxserver/syncthing:latest
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://127.0.0.1:8384/rest/noauth/health"]
-      interval: 5m
-      timeout: 20s
-      retries: 3
-      start_period: 50s
-```
-
-```
-  ###############################
-  ####### OpenSpeedTest #########
-  ###############################
-
-  speedtest:
-    image: openspeedtest/latest
-    healthcheck:
-      test: ["CMD-SHELL", "curl -If http://127.0.0.1:3000 | grep 'HTTP/1.1 200 OK'"]
-      interval: 5m
-      timeout: 20s
-      retries: 3
-      start_period: 40s
-```
-
-```
-  ###################################
-  ####### Speedtest Tracker #########
-  ###################################
-
-  speedtest:
-    image: lscr.io/linuxserver/speedtest-tracker
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://127.0.0.1:80 || exit 1"]
-      interval: 5m
-      timeout: 20s
-      retries: 3
-      start_period: 50s
-```
-
-```
-  #######################
-  ####### Unifi #########
-  #######################
-
-  unifi:
-    image: jacobalberty/unifi:latest
-    healthcheck:
-      test: ["CMD", "curl", "-fk", "https://127.0.0.1:8443/manage/account/login" ]
-      interval: 5m
-      timeout: 20s
-      retries: 3
-      start_period: 50s
-```
-
-```
-  #########################
-  ####### AutoHeal ########
-  #########################
-
-  autoheal:
-    image: willfarrell/autoheal:latest
-    container_name: autoheal
-    restart: always
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    environment:
-      - TZ=${TIMEZONE}
-      - AUTOHEAL_CONTAINER_LABEL=all
-      - AUTOHEAL_INTERVAL=30
-      - AUTOHEAL_START_PERIOD=30
-      - AUTOHEAL_DEFAULT_STOP_TIMEOUT=30
-      - AUTOHEAL_DELAY=15
-      - DOCKER_SOCK=/var/run/docker.sock
-      - CURL_TIMEOUT=35
+### AutoHeal Configuration
+```autoheal:
+  image: willfarrell/autoheal:latest
+  container_name: autoheal
+  restart: always
+  volumes:
+    - /var/run/docker.sock:/var/run/docker.sock
+  environment:
+    - TZ=${TIMEZONE}
+    - AUTOHEAL_CONTAINER_LABEL=all
+    - AUTOHEAL_INTERVAL=60
+    - AUTOHEAL_START_PERIOD=60
+    - AUTOHEAL_DEFAULT_STOP_TIMEOUT=30
+    - AUTOHEAL_DELAY=20
+    - DOCKER_SOCK=/var/run/docker.sock
+    - CURL_TIMEOUT=35
 ```
